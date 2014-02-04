@@ -5,14 +5,37 @@ import java.util.Arrays;
 import com.google.common.base.Objects;
 import com.poker.sitngo.exceptions.IllegalBetAdjustment;
 
+/**
+ * Represents a Poker Player.
+ * 
+ * @author Rohan Sood and Shwetank Raghuvanshi
+ */
 public class Player {
 
+	/**
+	 * Total chips the player currently has.
+	 * Any bets made in the current betting session are simultaneously
+	 * subtracted from this amount.
+	 */
 	private int chips;
+	
+	/**
+	 * Seat number of the player.
+	 */
 	private int position;
 	
+	/**
+	 * Amount that has been bet by the player in
+	 * the current betting round so far. Note that this has 
+	 * already been subtracted from <code>chips</code> field. 
+	 */
 	private int currentBet;
 	
+	/**
+	 * Two hole cards of the player. 
+	 */
 	private Card[] cards;
+	
 	
 	public Player(int startingChips, int position) {
 		this.chips = startingChips;
@@ -20,6 +43,14 @@ public class Player {
 		cards = new Card[2];
 	}
 	
+	/**
+	 * Provides a pre-initialized Player object for testing purposes.
+	 * 
+	 * @param chips
+	 * @param currentBet
+	 * @param position
+	 * @param cards
+	 */
 	public Player(int chips, int currentBet, int position, Card[] cards) {
 		if(cards == null)
 			throw new IllegalArgumentException();
@@ -53,6 +84,11 @@ public class Player {
 		return currentBet;
 	}
 	
+	/**
+	 * Increases the current bet and reduces the total chips by the given amount.
+	 * 
+	 * @param amount Amount
+	 */
 	public void adjustBetBy(int amount) {
 		if(amount > chips)
 			throw new IllegalBetAdjustment("Not Enough Chips");
@@ -63,9 +99,12 @@ public class Player {
 		currentBet += amount;
 	}
 	
-	public void resetBet(int amount) {
-		chips += amount;
+	public void resentCurrentBet() {
 		currentBet = 0;
+	}
+	
+	public void win(int amount) {
+		chips += amount;
 	}
 	
 	public Card[] getCards() {
