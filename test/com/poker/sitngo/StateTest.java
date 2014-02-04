@@ -6,168 +6,158 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 
-import org.junit.Before;
 import org.junit.Test;
 
 public class StateTest {
-	
-	Player[] players = null;
-	Player alice, bob, carol;
-	State state;
-	Pot pot;
-	@Before
-	public void Setup() {
-		int initialAmount = 30;
-		int currentBet = 20;
-		// new Player(int chips, int currentBet, int position, Card[] cards)
-		alice = new Player(1980, 20, 0, new Card[]{Card.AS, Card.AH}); //big blind
-		bob = new Player(1500, 0, 1, new Card[]{Card.KD, Card.KC}); //dealer (to act)
-		carol = new Player(2390, 10, 2, new Card[]{Card.QH, Card.QD}); //small blind
-		players = new Player[]{alice ,bob, carol, null, null, null, null, null, null};
-		pot = new Pot(initialAmount, currentBet, Arrays.asList(players));
-		state = new State(new Card[5], players, new HashSet<Player>(Arrays.asList(carol, alice)), 
-				bob, alice, bob, new ArrayList<Pot>(Arrays.asList(pot)));
-	}
-	
-	
+
 	/*
-	 * This test tests the equals method of the state object
-	 * 
-	 * 1. Initialize a set of players with all the attributes. Junit Setup() method does this
-	 * 2. Setup a state class 1 which uses players initialized in step1
-	 * 3. Initialize a different set of players with same value of attributes as in 1
-	 * 4. Setup state class2 which has players initialized in step 3.
-	 * 5. The two state objects are refering to different player and other objects with equal values, 
-	 *    Hence the equals method should consider them equal.
+	 * Test the equals method of the state object
+	 * 1. Setup a state class 1
+	 * 2. Setup state class 2 which has different players objects with same values
+	 * 3. Validate if the two states are equivalent
 	 */
 	@Test
 	public void testStateEquality() {
-		
-		
-		//state 1 initialized in the Setup() method	
-		
-		//initialize players for state2
+
+		Player alice = new Player(1980, 20, 0, new Card[]{Card.AS, Card.AH}); //big blind
+		Player bob = new Player(1500, 0, 1, new Card[]{Card.KD, Card.KC}); //dealer (to act)
+		Player carol = new Player(2390, 10, 2, new Card[]{Card.QH, Card.QD}); //small blind
+		Player[] players = new Player[]{alice ,bob, carol, null, null, null, null, null, null};
+
+		State state = new State(new Card[5], players, new HashSet<Player>(Arrays.asList(carol, alice)), 
+				bob, alice, bob, new ArrayList<Pot>(Arrays.asList(new Pot(30, 20, Arrays.asList(players)))));
+
 		Player expectedAlice = new Player(1980, 20, 0, new Card[]{Card.AS, Card.AH});
 		Player expectedBob = new Player(1500, 0, 1, new Card[]{Card.KD, Card.KC});
 		Player expectedCarol = new Player(2390, 10, 2, new Card[]{Card.QH, Card.QD});
 		Player[] expectedPlayers = new Player[]{expectedAlice ,expectedBob, expectedCarol, null, null, null, null, null, null};
-		
-		//initialize state 2
+
 		State expectedState = new State(new Card[5], expectedPlayers, new HashSet<Player>(Arrays.asList(carol, alice)), 
 				expectedBob, expectedAlice, expectedBob, new ArrayList<Pot>(Arrays.asList(new Pot(30, 20, Arrays.asList(expectedPlayers)))));
-		//Assert if both states are equal
+
 		assertEquals(state, expectedState);
 	}
-	
-	/*
-	 * This test tests the Call by a player
-	 * 1. Execute the call move by a player on state 1
-	 * 2. Setup state2 ,the expected state, with increased pot value and decreased chips of the player
-	 * 3. Assert if state 1's values are equal to state 2's values after executing the call move
-	 */
+
+
 	@Test
 	public void testValidCallMove() {
+		int currentBet , bigBlind = 20, smallBlind = 10;	//big blind
+		currentBet = bigBlind;
 		
-		
-		//initialize a statechanger which manipulates the 'state' variable
+		Player alice = new Player(1980, bigBlind, 0, new Card[]{Card.AS, Card.AH}); //big blind
+		Player bob = new Player(1500, 0, 1, new Card[]{Card.KD, Card.KC}); //dealer (to act)
+		Player carol = new Player(2390, smallBlind, 2, new Card[]{Card.QH, Card.QD}); //small blind
+		Player[] players = new Player[]{alice ,bob, carol, null, null, null, null, null, null};
+
+		State state = new State(new Card[5], players, new HashSet<Player>(Arrays.asList(carol, alice)), 
+				bob, alice, bob, new ArrayList<Pot>(Arrays.asList(new Pot(bigBlind+smallBlind, currentBet, Arrays.asList(carol, alice)))));
+
 		StateChanger stateChanger = new StateChanger(state);
-		// Bob calls
-		stateChanger.call(bob);
-		
-		/*
-		 * setup the expected State
-		 */
-		Player expectedAlice = new Player(1980, 20, 0, new Card[]{Card.AS, Card.AH});
-		//reduce expected bob's chips by the currentBet (equal to 20 for state, initialized in setup method) 
-		Player expectedBob = new Player(1500-20, 20, 1, new Card[]{Card.KD, Card.KC});
+		stateChanger.call(bob); // Bob calls
+
+		Player expectedAlice = new Player(1980, currentBet, 0, new Card[]{Card.AS, Card.AH});
+		Player expectedBob = new Player(1500-currentBet, currentBet, 1, new Card[]{Card.KD, Card.KC});
 		Player expectedCarol = new Player(2390, 10, 2, new Card[]{Card.QH, Card.QD});
 		Player[] expectedPlayers = new Player[]{expectedAlice ,expectedBob, expectedCarol, null, null, null, null, null, null};
-		// increase the value of the expected pot by the amount called by bob
-		Pot expectedPot = new Pot(pot.getAmount()+20, 20, Arrays.asList(expectedCarol, expectedAlice, expectedBob));
-		
+
 		State expectedState = new State(new Card[5], expectedPlayers, new HashSet<Player>(Arrays.asList(carol, alice, bob)), 
-				expectedBob, expectedAlice, expectedCarol, new ArrayList<Pot>(Arrays.asList(expectedPot)));
-		
-		//assert that initial state is equal to the expected state.
+				expectedBob, expectedAlice, expectedCarol, new ArrayList<Pot>(Arrays.asList(new Pot(bigBlind+bigBlind+smallBlind, currentBet, Arrays.asList(expectedCarol, expectedAlice, expectedBob)))));
+
 		assertEquals(state, expectedState);
 		
 	}
-	
+
 	@Test
 	public void testValidRaiseMove() {
+		int currentBet , bigBlind = 20, smallBlind = 10;	//big blind
+		currentBet = bigBlind;
+		int raiseToAmount = 50;
 		
-		/*Player player0 = new Player(1980, 20, 0, new Card[]{Card.AS, Card.AH}); //big blind
-		Player player1 = new Player(1500, 0, 1, new Card[]{Card.KD, Card.KC}); //dealer (to act)
-		Player player2 = new Player(2390, 10, 2, new Card[]{Card.QH, Card.QD}); //small blind
+		Player alice = new Player(1980, bigBlind, 0, new Card[]{Card.AS, Card.AH}); //big blind
+		Player bob = new Player(1500, 0, 1, new Card[]{Card.KD, Card.KC}); //dealer (to act)
+		Player carol = new Player(2390, smallBlind, 2, new Card[]{Card.QH, Card.QD}); //small blind
+		Player[] players = new Player[]{alice ,bob, carol, null, null, null, null, null, null};
+
+		State state = new State(new Card[5], players, new HashSet<Player>(Arrays.asList(carol, alice)), 
+				bob, alice, bob, new ArrayList<Pot>(Arrays.asList(new Pot(bigBlind + smallBlind, currentBet, Arrays.asList(carol, alice)))));
+
+		StateChanger stateChanger = new StateChanger(state);
+		stateChanger.raise(bob,raiseToAmount); // Bob calls
+		currentBet = raiseToAmount;
+
+		Player expectedAlice = new Player(1980, bigBlind, 0, new Card[]{Card.AS, Card.AH});
+		Player expectedBob = new Player(1500-currentBet, currentBet, 1, new Card[]{Card.KD, Card.KC});
+		Player expectedCarol = new Player(2390, smallBlind, 2, new Card[]{Card.QH, Card.QD});
+		Player[] expectedPlayers = new Player[]{expectedAlice ,expectedBob, expectedCarol, null, null, null, null, null, null};
+		int expectedPotSum = currentBet + bigBlind + smallBlind;
 		
-		State state = new State();
-		state.addPlayer(player0);
-		state.addPlayer(player1);
-		state.addPlayer(player2);
+		State expectedState = new State(new Card[5], expectedPlayers, new HashSet<Player>(Arrays.asList(carol, alice, bob)), 
+				expectedBob, expectedAlice, expectedCarol, 
+				new ArrayList<Pot>(Arrays.asList(new Pot(expectedPotSum, currentBet, Arrays.asList(expectedCarol, expectedAlice, expectedBob)))));
+
+		assertEquals(state, expectedState);
 		
-		state.setCurrentBet(20);
-		state.setDealer(player1);
-		state.setCurrentBetter(player0);// big blind is the current better
-		state.setCurrentPlayer(player1);// player 1 to act
-		state.setCurrentPot(new Pot(30, Arrays.asList(player0, player1, player2)));
+	}
+
+	@Test
+	public void testValidCheckMove() {
+		int currentBet = 0, potValue = 500;
+		Player currentBetter = null;
+		
+		Player alice = new Player(1980, currentBet, 0, new Card[]{Card.AS, Card.AH}); // (to act)
+		Player bob = new Player(1500, currentBet, 1, new Card[]{Card.KD, Card.KC}); //dealer
+		Player carol = new Player(2390, currentBet, 2, new Card[]{Card.QH, Card.QD}); 
+		Player[] players = new Player[]{alice ,bob, carol, null, null, null, null, null, null};
+		
+		State state = new State(new Card[5], players, new HashSet<Player>(Arrays.asList(carol, alice,bob)), 
+				bob, alice, currentBetter, new ArrayList<Pot>(Arrays.asList(new Pot(potValue, currentBet, Arrays.asList(carol, alice, bob)))));
 		
 		StateChanger stateChanger = new StateChanger(state);
-		stateChanger.raise(player1, 60); //player 1 raises to 60 
+		stateChanger.check(carol); // Carol checks
 		
-		Player expectedPlayer0 = new Player(1980, 20, 0, new Card[]{Card.AS, Card.AH});
-		Player expectedPlayer1 = new Player(1440, 60, 1, new Card[]{Card.KD, Card.KC});
-		Player expectedPlayer2 = new Player(2390, 10, 2, new Card[]{Card.QH, Card.QD});
+		Player expectedAlice = new Player(1980, currentBet, 0, new Card[]{Card.AS, Card.AH});
+		Player expectedBob = new Player(1500, currentBet, 1, new Card[]{Card.KD, Card.KC}); //dealer
+		Player expectedCarol = new Player(2390, currentBet, 2, new Card[]{Card.QH, Card.QD});
+		Player[] expectedPlayers = new Player[]{expectedAlice ,expectedBob, expectedCarol, null, null, null, null, null, null};
 		
-		State expectedState = new State();
-		expectedState.addPlayer(expectedPlayer0);
-		expectedState.addPlayer(expectedPlayer1);
-		expectedState.addPlayer(expectedPlayer2);
-		
-		expectedState.setCurrentBet(60);
-		expectedState.setDealer(expectedPlayer1);
-		expectedState.setCurrentBetter(expectedPlayer1);
-		expectedState.setCurrentPlayer(expectedPlayer2);
-		expectedState.setCurrentPot(new Pot(90, Arrays.asList(player0, player1, player2)));
-		
-		assertEquals(expectedState, state);*/
-	}
+		State expectedState = new State(new Card[5], expectedPlayers, new HashSet<Player>(Arrays.asList(carol, alice, bob)), 
+				expectedBob, expectedCarol, currentBetter, 
+				new ArrayList<Pot>(Arrays.asList(new Pot(potValue, currentBet, Arrays.asList(expectedCarol, expectedAlice, expectedBob)))));
+			}
 	
 	@Test
 	public void testValidFoldMove() {
+		int currentBet = 20 ;
+		int prevRoundPotAmount = 300, prevRoundbet = 100;
 		
-		/*Player player0 = new Player(1980, 20, 0, new Card[]{Card.AS, Card.AH}); //big blind
-		Player player1 = new Player(1500, 0, 1, new Card[]{Card.KD, Card.KC}); //dealer (to act)
-		Player player2 = new Player(2390, 10, 2, new Card[]{Card.QH, Card.QD}); //small blind
 		
-		State state = new State();
-		state.addPlayer(player0);
-		state.addPlayer(player1);
-		state.addPlayer(player2);
+		Player alice = new Player(1980, currentBet, 0, new Card[]{Card.AS, Card.AH}); //called the bet by carol
+		Player bob = new Player(1500, 0, 1, new Card[]{Card.KD, Card.KC}); //dealer (to act)
+		Player carol = new Player(2390, currentBet, 2, new Card[]{Card.QH, Card.QD}); //bet
+		Player[] players = new Player[]{alice ,bob, carol, null, null, null, null, null, null};
+
+		Pot prevRoundPot = new Pot(prevRoundPotAmount,prevRoundbet,Arrays.asList(carol,alice,bob) );
+		int newPotAmount = currentBet*2;
+		Pot newPot = new Pot(newPotAmount, currentBet, Arrays.asList(carol, alice));
 		
-		state.setCurrentBet(20);
-		state.setDealer(player1);
-		state.setCurrentBetter(player0);// big blind is the current better
-		state.setCurrentPlayer(player1);// player 1 to act
-		state.setCurrentPot(new Pot(30, Arrays.asList(player0, player1, player2)));
-		
+		State state = new State(new Card[5], players, new HashSet<Player>(Arrays.asList(carol, alice, bob)), 
+				bob, alice, bob, new ArrayList<Pot>(Arrays.asList(newPot,prevRoundPot)));
+
 		StateChanger stateChanger = new StateChanger(state);
-		stateChanger.fold(player1); //player 1 folds
+		stateChanger.fold(bob); // Bob folds
 		
-		Player expectedPlayer0 = new Player(1980, 20, 0, new Card[]{Card.AS, Card.AH});
-		Player expectedPlayer1 = new Player(1500, 0, 1, new Card[]{Card.KD, Card.KC});
-		Player expectedPlayer2 = new Player(2390, 10, 2, new Card[]{Card.QH, Card.QD});
+		//round finishes currentbet sets to 0 for players involved
+		currentBet = 0;
+		Player expectedAlice = new Player(1980, currentBet, 0, new Card[]{Card.AS, Card.AH});
+		Player expectedBob = new Player(1500, 0, 1, new Card[]{Card.KD, Card.KC});
+		Player expectedCarol = new Player(2390, currentBet, 2, new Card[]{Card.QH, Card.QD});
+		Player[] expectedPlayers = new Player[]{expectedAlice ,expectedBob, expectedCarol, null, null, null, null, null, null};
 		
-		State expectedState = new State();
-		expectedState.addPlayer(expectedPlayer0);
-		expectedState.addPlayer(expectedPlayer1);
-		expectedState.addPlayer(expectedPlayer2);
-		
-		expectedState.setCurrentBet(20);
-		expectedState.setDealer(expectedPlayer1);
-		expectedState.setCurrentBetter(expectedPlayer0);
-		expectedState.setCurrentPlayer(expectedPlayer2);
-		expectedState.setCurrentPot(new Pot(30, Arrays.asList(player0, player2)));
-		
-		assertEquals(expectedState, state);*/
-	}
+		//add up the amount of pots of two rounds and remove bob from pot share list
+		Pot expectedPot = new Pot(prevRoundPotAmount + newPotAmount, currentBet, Arrays.asList(expectedCarol,expectedAlice));
+		State expectedState = new State(new Card[5], expectedPlayers, new HashSet<Player>(Arrays.asList(carol, alice, bob)), 
+				expectedBob, expectedAlice, expectedCarol, new ArrayList<Pot>(Arrays.asList(expectedPot)));
+
+		assertEquals(state, expectedState);
+			}
 }
